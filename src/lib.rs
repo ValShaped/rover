@@ -1,9 +1,10 @@
 //! # Overmount
 //!
-//! Library crate used by rwfus.rs to do filesystem stuff
+//! Library crate used by Overmount to do filesystem stuff
 //!
-//! The name is currently aa misnomer...
 //! TODO: fix name
+
+use thiserror::Error;
 
 pub mod btrfs;
 
@@ -19,9 +20,9 @@ pub mod overlay {
     }
 }
 
-use thiserror::Error;
-
+/// A specialized [`Result`] type for Overmount errors.
 pub type Result<T> = std::result::Result<T, crate::Error>;
+
 
 #[derive(Error, Debug)]
 pub enum Error {
