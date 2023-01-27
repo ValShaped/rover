@@ -207,7 +207,7 @@ impl FormatterOptions {
         Ok(self)
     }
 
-    fn to_args(self) -> Vec<OsString> {
+    fn to_args(&self) -> Vec<OsString> {
         let mut args = vec![];
         if let FormatOpt::Uint(arg) = self.byte_count {
             args.push(OsString::from(format!("--byte-count={arg}")));
@@ -224,13 +224,13 @@ impl FormatterOptions {
                 DATA_PROFILES[arg as usize]
             )));
         }
-        if let FormatOpt::List(features) = self.features {
+        if let FormatOpt::List(features) = &self.features {
             args.push(OsString::from(format!("--features={}", features.join(","))));
         }
         if let FormatOpt::Bool(true) = self.force {
             args.push(OsString::from("--force"))
         }
-        if let FormatOpt::Text(arg) = self.label {
+        if let FormatOpt::Text(arg) = &self.label {
             args.push(OsString::from(format!("--label={arg}")));
         }
         if let FormatOpt::Data(arg) = self.metadata {
@@ -240,25 +240,25 @@ impl FormatterOptions {
             )));
         }
         if let FormatOpt::Bool(true) = self.mixed {
-            args.push(OsString::from(format!("--mixed")));
+            args.push(OsString::from("--mixed".to_string()));
         }
         if let FormatOpt::Bool(true) = self.no_discard {
-            args.push(OsString::from(format!("--nodiscard")));
+            args.push(OsString::from("--nodiscard".to_string()));
         }
         if let FormatOpt::Uint(arg) = self.nodesize {
             args.push(OsString::from(format!("--nodesize={arg}")));
         }
-        if let FormatOpt::List(features) = self.runtime_features {
+        if let FormatOpt::List(features) = &self.runtime_features {
             args.push(OsString::from(format!(
                 "--runtime-features={}",
                 features.join(",")
             )));
         }
-        if let FormatOpt::Path(arg) = self.rootdir {
+        if let FormatOpt::Path(arg) = &self.rootdir {
             args.push(OsString::from(format!("--rootdir={}", arg.display())));
         }
         if let FormatOpt::Bool(true) = self.shrink {
-            args.push(OsString::from(format!("--shrink")));
+            args.push(OsString::from("--shrink".to_string()));
         }
         args
     }
