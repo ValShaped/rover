@@ -40,7 +40,10 @@
 //! formatter.format(&PathBuf::from("./test.btrfs")).unwrap();
 //! ```
 
-use crate::{Error, Result};
+use crate::{
+    Error::{self, *},
+    Result,
+};
 use std::{
     ffi::{OsStr, OsString},
     fmt::{write, Display},
@@ -107,28 +110,14 @@ impl std::fmt::Display for ChecksumAlgorithm {
 enum FormatOpt {
     #[default]
     None,
-    Algo(ChecksumAlgorithm),
-    Bool(bool),
-    Data(DataProfile),
     List(Vec<String>),
-    Path(PathBuf),
-    Text(String),
-    Uint(u64),
-    Uuid(String),
 }
 
 impl std::fmt::Display for FormatOpt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             FormatOpt::None => write!(f, "None"),
-            FormatOpt::Algo(arg) => write!(f, "{arg}"),
-            FormatOpt::Bool(arg) => write!(f, "{arg}"),
-            FormatOpt::Data(arg) => write!(f, "{arg}"),
             FormatOpt::List(arg) => write!(f, "{}", arg.join(",")),
-            FormatOpt::Path(arg) => write!(f, "{}", arg.display()),
-            FormatOpt::Text(arg) => write!(f, "{arg}"),
-            FormatOpt::Uint(arg) => write!(f, "{arg}"),
-            FormatOpt::Uuid(arg) => write!(f, "{arg}"),
         }
     }
 }
@@ -137,26 +126,26 @@ impl std::fmt::Display for FormatOpt {
 /// Representation of options for [`mkfs.btrfs`](https://btrfs.readthedocs.io/en/latest/mkfs.btrfs.html#options).
 #[derive(Clone, Debug, Default)]
 pub struct FormatterOptions {
-    byte_count: FormatOpt,       // Uint
-    checksum: FormatOpt,         // Algo
-    data: FormatOpt,             // Data
-    features: FormatOpt,         // List
-    force: FormatOpt,            // Bool
-    label: FormatOpt,            // Text
-    metadata: FormatOpt,         // Data
-    mixed: FormatOpt,            // Bool
-    no_discard: FormatOpt,       // Bool
-    nodesize: FormatOpt,         // Uint
-    rootdir: FormatOpt,          // Path
-    runtime_features: FormatOpt, // List
-    sectorsize: FormatOpt,       // Uint
-    shrink: FormatOpt,           // Bool
-    uuid: FormatOpt,             // Uuid
+    byte_count: Option<OsString>,       // Uint
+    checksum: Option<OsString>,         // Csum
+    data: Option<OsString>,             // Data
+    features: Option<OsString>,         // List
+    force: Option<OsString>,            // Bool
+    label: Option<OsString>,            // Text
+    metadata: Option<OsString>,         // Data
+    mixed: Option<OsString>,            // Bool
+    no_discard: Option<OsString>,       // Bool
+    nodesize: Option<OsString>,         // Uint
+    rootdir: Option<OsString>,          // Path
+    runtime_features: Option<OsString>, // List
+    sectorsize: Option<OsString>,       // Uint
+    shrink: Option<OsString>,           // Bool
+    uuid: Option<OsString>,             // Uuid
 }
 
 impl FormatterOptions {
     /// Specify the size of each device, as seen by the filesystem.
-    /// 
+    ///
     /// # Example
     /// ```
     /// use overmount::btrfs::format::Formatter;
@@ -165,11 +154,11 @@ impl FormatterOptions {
     ///     .unwrap();
     /// ```
     pub fn byte_count(mut self, byte_count: u64) -> Result<Self> {
-        self.byte_count = FormatOpt::Uint(byte_count);
+        self.byte_count = Some(OsString::from(format!("--byte-count={byte_count}")));
         Ok(self)
     }
     /// Specify the checksum algorithm (as ChecksumAlgorithm.)
-    /// 
+    ///
     /// # Example
     /// ```
     /// use overmount::btrfs::format::{
@@ -181,11 +170,11 @@ impl FormatterOptions {
     ///     .unwrap();
     /// ```
     pub fn checksum(mut self, checksum: ChecksumAlgorithm) -> Result<Self> {
-        self.checksum = FormatOpt::Algo(checksum);
+        self.checksum = Some(OsString::from(format!("--checksum={checksum}")));
         Ok(self)
     }
     /// Specify the profile for data block groups (as DataProfile.)
-    /// 
+    ///
     /// # Example:
     /// ```
     /// use overmount::btrfs::format::{DataProfile, Formatter};
@@ -194,7 +183,7 @@ impl FormatterOptions {
     ///     .unwrap();
     /// ```
     pub fn data(mut self, data: DataProfile) -> Result<Self> {
-        self.data = FormatOpt::Data(data);
+        self.data = Some(OsString::from(format!("--data={data}")));
         Ok(self)
     }
     /// Set mkfs-time features. Unset features by prefixing them with '^'.
@@ -207,16 +196,19 @@ impl FormatterOptions {
     ///     .unwrap();
     /// ```
     pub fn features<'a>(mut self, features: impl IntoIterator<Item = &'a str>) -> Result<Self> {
-        self.features = FormatOpt::List(
-            features
-                .into_iter()
-                .map(|x| -> String { x.to_owned() })
-                .collect(),
-        );
+        self.features = Some(OsString::from(format!(
+            "--features={}",
+            FormatOpt::List(
+                features
+                    .into_iter()
+                    .map(|x| -> String { x.to_owned() })
+                    .collect()
+            )
+        )));
         Ok(self)
     }
     /// Force-format the device, even if an existing filesystem is present.
-    /// 
+    ///
     /// # Example:
     /// ```
     /// use overmount::btrfs::format::Formatter;
@@ -225,11 +217,11 @@ impl FormatterOptions {
     ///     .unwrap();
     /// ```
     pub fn force(mut self) -> Result<Self> {
-        self.force = FormatOpt::Bool(true);
+        self.force = Some(OsString::from("--force"));
         Ok(self)
     }
     /// Set the partition label.
-    /// 
+    ///
     /// # Example:
     /// ```
     /// use overmount::btrfs::format::Formatter;
@@ -238,11 +230,17 @@ impl FormatterOptions {
     ///     .unwrap();
     /// ```
     pub fn label(mut self, label: &str) -> Result<Self> {
-        self.label = FormatOpt::Text(String::from(label));
+        if label.len() > 255 {
+            return Err(ArgumentError(format!(
+                "label cannot be longer than 255 bytes: {}, {label}",
+                label.len()
+            )));
+        }
+        self.label = Some(OsString::from(format!("--label={label}")));
         Ok(self)
     }
     /// Specify the profile for metadata block groups (as DataProfile.)
-    /// 
+    ///
     /// # Example:
     /// ```
     /// use overmount::btrfs::format::{DataProfile, Formatter};
@@ -251,11 +249,11 @@ impl FormatterOptions {
     ///     .unwrap();
     /// ```
     pub fn metadata(mut self, metadata: DataProfile) -> Result<Self> {
-        self.metadata = FormatOpt::Data(metadata);
+        self.metadata = Some(OsString::from(format!("--metadata={metadata}")));
         Ok(self)
     }
     /// Enable mixing of data and metadata blocks
-    /// 
+    ///
     /// # Example:
     /// ```
     /// use overmount::btrfs::format::Formatter;
@@ -264,11 +262,11 @@ impl FormatterOptions {
     ///     .unwrap();
     /// ```
     pub fn mixed(mut self) -> Result<Self> {
-        self.mixed = FormatOpt::Bool(true);
+        self.mixed = Some(OsString::from("--mixed"));
         Ok(self)
     }
     /// Disable implicit TRIM of storage device.
-    /// 
+    ///
     /// # Example:
     /// ```
     /// use overmount::btrfs::format::Formatter;
@@ -277,13 +275,13 @@ impl FormatterOptions {
     ///     .unwrap();
     /// ```
     pub fn no_discard(mut self) -> Result<Self> {
-        self.no_discard = FormatOpt::Bool(true);
+        self.no_discard = Some(OsString::from("--nodiscard"));
         Ok(self)
     }
     /// Specify the size of a b-tree node
     ///
     /// `nodesize must be a power of 2 less than 2^14
-    /// 
+    ///
     /// # Example:
     /// ```
     /// use overmount::btrfs::format::Formatter;
@@ -293,18 +291,16 @@ impl FormatterOptions {
     /// ```
     pub fn nodesize(mut self, nodesize: usize) -> Result<Self> {
         if nodesize.is_power_of_two() && nodesize <= 16384 {
-            self.nodesize = FormatOpt::Uint(nodesize as u64);
+            self.nodesize = Some(OsString::from(format!("--nodesize={nodesize}")));
             Ok(self)
         } else {
-            Err(Error::AssignmentError(
-                String::from("node_size"),
-                format!("{nodesize}"),
-                String::from("Must be a power of 2, and <= 16384"),
-            ))
+            Err(ArgumentError(format!(
+                "node_size ( = {nodesize} )\nMust be a power of 2, and <= 16384"
+            )))
         }
     }
     /// Specify a directory containing data to copy into the btrfs filesystem.
-    /// 
+    ///
     /// # Example:
     /// ```
     /// use std::path::PathBuf;
@@ -314,12 +310,16 @@ impl FormatterOptions {
     ///     .unwrap();
     /// ```
     pub fn rootdir(mut self, rootdir: PathBuf) -> Result<Self> {
-        self.rootdir = FormatOpt::Path(rootdir);
+        // make sure the rootdir is a valid Path
+        rootdir.try_exists()?;
+
+        let rootdir = format!("--rootdir={}", rootdir.display());
+        self.rootdir = Some(OsString::from(rootdir));
         Ok(self)
     }
     /// Set runtime features.
     /// Unset features by prefixing them with '^'.
-    /// 
+    ///
     /// # Example:
     /// ```
     /// use overmount::btrfs::format::Formatter;
@@ -331,19 +331,22 @@ impl FormatterOptions {
         mut self,
         features: impl IntoIterator<Item = &'a str>,
     ) -> Result<Self> {
-        self.runtime_features = FormatOpt::List(
-            features
-                .into_iter()
-                .map(|x| -> String { x.to_owned() })
-                .collect(),
-        );
+        self.runtime_features = Some(OsString::from(format!(
+            "--runtime-features={}",
+            FormatOpt::List(
+                features
+                    .into_iter()
+                    .map(|x| -> String { x.to_owned() })
+                    .collect(),
+            )
+        )));
         Ok(self)
     }
     /// Set sector size.
     ///
     /// *If set to a value unsupported by the current kernel,*
     /// *the resulting volume will not be mountable.*
-    /// 
+    ///
     /// # Example:
     /// ```
     /// use overmount::btrfs::format::Formatter;
@@ -352,12 +355,12 @@ impl FormatterOptions {
     ///     .unwrap();
     /// ```
     pub fn sectorsize(mut self, sectorsize: usize) -> Result<Self> {
-        self.sectorsize = FormatOpt::Uint(sectorsize as u64);
+        self.sectorsize = Some(OsString::from(format!("--sectorsize={sectorsize}")));
         Ok(self)
     }
     /// If the specified device is a file, and the `rootdir` option is specified,
     /// shrink the file to the minimum required size
-    /// 
+    ///
     /// # Example:
     /// ```
     /// use overmount::btrfs::format::Formatter;
@@ -366,11 +369,11 @@ impl FormatterOptions {
     ///     .unwrap();
     /// ```
     pub fn shrink(mut self) -> Result<Self> {
-        self.shrink = FormatOpt::Bool(true);
+        self.shrink = Some(OsString::from("--shrink"));
         Ok(self)
     }
     /// Set the partition UUID
-    /// 
+    ///
     /// # Example:
     /// ```
     /// use overmount::btrfs::format::Formatter;
@@ -379,72 +382,39 @@ impl FormatterOptions {
     ///     .unwrap();
     /// ```
     pub fn uuid(mut self, uuid: &str) -> Result<Self> {
-        self.uuid = FormatOpt::Uuid(uuid.to_owned());
+        self.uuid = Some(OsString::from(format!("--uuid={uuid}")));
         Ok(self)
     }
 
     /// Convert self into args (AKA Vec<OsString>)
     fn to_args(&self) -> Vec<OsString> {
-        use FormatOpt::*;
-
         let mut args = vec![];
-        let mut push_arg = |arg, opt: &FormatOpt| {
-            args.push(OsString::from(match *opt {
-                None => return,
-                Bool(_) => format!("--{arg}"),
-                _ => format!("--{arg}={opt}"),
-            }));
-        };
-        if let Uint(_) = self.byte_count {
-            push_arg("byte-count", &self.byte_count);
-        }
-        if let Algo(_) = self.checksum {
-            push_arg("checksum", &self.checksum);
-        }
-        if let Data(_) = self.data {
-            push_arg("data", &self.data);
-        }
-        if let List(_) = self.features {
-            push_arg("features", &self.features);
-        }
-        if let Bool(_) = self.force {
-            push_arg("force", &self.force);
-        }
-        if let Text(_) = &self.label {
-            push_arg("label", &self.label);
-        }
-        if let Data(_) = self.metadata {
-            push_arg("metadata", &self.metadata);
-        }
-        if let Bool(_) = self.mixed {
-            push_arg("mixed", &self.mixed);
-        }
-        if let Bool(_) = self.no_discard {
-            push_arg("nodiscard", &self.no_discard);
-        }
-        if let Uint(_) = self.nodesize {
-            push_arg("nodesize", &self.nodesize);
-        }
-        if let Path(_) = &self.rootdir {
-            push_arg("rootdir", &self.rootdir);
-        }
-        if let List(_) = &self.runtime_features {
-            push_arg("runtime-features", &self.runtime_features);
-        }
-        if let Uint(_) = self.sectorsize {
-            push_arg("sectorsize", &self.sectorsize);
-        }
-        if let Bool(_) = self.shrink {
-            push_arg("shrink", &self.shrink);
-        }
-        if let Uuid(_) = &self.uuid {
-            push_arg("uuid", &self.uuid);
+        for option in [
+            &self.byte_count,
+            &self.checksum,
+            &self.data,
+            &self.features,
+            &self.force,
+            &self.label,
+            &self.metadata,
+            &self.mixed,
+            &self.no_discard,
+            &self.nodesize,
+            &self.rootdir,
+            &self.runtime_features,
+            &self.sectorsize,
+            &self.shrink,
+            &self.uuid,
+        ] {
+            if let Some(arg) = option.as_ref() {
+                args.push(arg.clone());
+            }
         }
         args
     }
 
     /// Dump FormatterOptions as they'll be passed to mkfs.btrfs
-    /// 
+    ///
     /// # Example:
     /// ```
     /// use overmount::btrfs::format::Formatter;
@@ -457,7 +427,7 @@ impl FormatterOptions {
     }
 
     /// Bake FormatterOptions into a Formatter
-    /// 
+    ///
     /// # Example:
     /// ```
     /// use std::path::PathBuf;
@@ -483,11 +453,20 @@ pub struct Formatter {
 
 impl Formatter {
     /// Specify FormatterOptions first, then build a formatter
+    ///
+    /// ```
+    /// use std::path::PathBuf;
+    /// use overmount::btrfs::format::Formatter;
+    ///
+    /// let options = Formatter::options()
+    /// /* set options here...*/;
+    /// options.finalize().format(&PathBuf::from("./test.btrfs")).unwrap();
+    /// ```
     pub fn options() -> FormatterOptions {
         FormatterOptions::default()
     }
     /// Format a device with mkfs.btrfs
-    /// 
+    ///
     /// # Example:
     /// ```
     /// use std::path::PathBuf;
