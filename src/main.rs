@@ -52,16 +52,16 @@ fn dump_args() -> OvResult<()> {
         .checksum(ChecksumAlgorithm::CRC32C)?
         .data(DataProfile::Dup)?
         .features(["mixed-bg"])?
-        .force()?      // true if called
-        .label("label")?
+        .force()? // true if called
+        .label("label-label")?
         .metadata(DataProfile::Dup)?
-        .mixed()?      // true if called
+        .mixed()? // true if called
         .no_discard()? // true if called
         .nodesize(4096_usize)?
         .rootdir(PathBuf::from("./overmount/src"))?
         .runtime_features(["quota"])?
         .sectorsize(4096_usize)?
-        .shrink()?     // true if called
+        .shrink()? // true if called
         .uuid("73e1b7e2-a3a8-49c2-b258-06f01a889bba")?
         .dump_args()
         .finalize()
@@ -83,16 +83,16 @@ fn try_example_code() -> OvResult<()> {
         .checksum(ChecksumAlgorithm::CRC32C)?
         .data(DataProfile::Dup)?
         .features(["mixed-bg"])?
-        .force()?      // true if called
+        .force()? // true if called
         .label("label")?
         .metadata(DataProfile::Dup)?
-        .mixed()?      // true if called
+        .mixed()? // true if called
         .no_discard()? // true if called
         .nodesize(4096_usize)?
         .rootdir(PathBuf::from("./testdir"))?
         .runtime_features(["quota"])?
         .sectorsize(4096_usize)?
-        .shrink()?     // true if called
+        .shrink()? // true if called
         .uuid("73e1b7e2-a3a8-49c2-b258-06f01a889bba")?
         .finalize();
     let Output {
