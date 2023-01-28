@@ -5,6 +5,6 @@
 #![allow(unused_imports)]
 
 pub mod format;
+//pub mod mount;
+
 use std::path::{Path, PathBuf};
-use sys_mount::{Mount, MountBuilder, MountFlags};
-pub fn mount(_device: &Path, _destination: &Path) {}
