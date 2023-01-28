@@ -54,6 +54,12 @@ use std::{
 
 pub const RUNTIME_FEATURES: [&str; 2] = ["quota", "free-space-tree"];
 
+/// # DataProfile
+/// Represents the valid data profiles for
+/// ```sh
+/// mkfs.btrfs --data ( raid0 | raid1 | ... )
+/// ```
+///
 #[derive(Copy, Clone, Debug)]
 pub enum DataProfile {
     Raid0,
@@ -85,20 +91,25 @@ impl std::fmt::Display for DataProfile {
     }
 }
 
+/// # ChecksumAlgorithm
+/// Represents the valid checksum algorithms for
+/// ```sh
+/// mkfs.btrfs --checksum [ crc32c | xxhash | sha256 | blake2 ]
+/// ```
 #[derive(Clone, Copy, Debug)]
 pub enum ChecksumAlgorithm {
-    CRC32C,
-    XXHash,
-    SHA256,
+    Crc32c,
+    XxHash,
+    Sha256,
     Blake2,
 }
 impl std::fmt::Display for ChecksumAlgorithm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use ChecksumAlgorithm::*;
         let algorithm: &str = match *self {
-            CRC32C => "crc32c",
-            XXHash => "xxhash",
-            SHA256 => "sha256",
+            Crc32c => "crc32c",
+            XxHash => "xxhash",
+            Sha256 => "sha256",
             Blake2 => "blake2",
         };
         write!(f, "{algorithm}")
@@ -195,6 +206,8 @@ impl FormatterOptions {
     ///     .features(["mixed-bg"])
     ///     .unwrap();
     /// ```
+    // TODO: Verify features.
+    // ? mkfs.btrfs verifies them again later, so is that even necessary?
     pub fn features<'a>(mut self, features: impl IntoIterator<Item = &'a str>) -> Result<Self> {
         self.features = Some(OsString::from(format!(
             "--features={}",
@@ -327,6 +340,7 @@ impl FormatterOptions {
     ///     .runtime_features(["quota"])
     ///     .unwrap();
     /// ```
+    // TODO: Verify runtime features? is that even necessary?
     pub fn runtime_features<'a>(
         mut self,
         features: impl IntoIterator<Item = &'a str>,
@@ -381,6 +395,7 @@ impl FormatterOptions {
     ///     .uuid("73e1b7e2-a3a8-49c2-b258-06f01a889bba")
     ///     .unwrap();
     /// ```
+    // TODO: Verify UUIDs (with external crate?)
     pub fn uuid(mut self, uuid: &str) -> Result<Self> {
         self.uuid = Some(OsString::from(format!("--uuid={uuid}")));
         Ok(self)

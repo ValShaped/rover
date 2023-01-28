@@ -19,7 +19,7 @@ fn format_start_to_finish() -> Result<()> {
     let output = Formatter::options()
         .byte_count(536_870_912_u64)
         .expect("536,870,912_u64 is a valid byte_count.")
-        .checksum(ChecksumAlgorithm::CRC32C)
+        .checksum(ChecksumAlgorithm::Crc32c)
         .expect("CRC32C is a valid ChecksumAlgorithm.")
         .data(DataProfile::Dup)
         .expect("Dup is a valid DataProfile.")

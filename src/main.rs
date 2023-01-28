@@ -49,7 +49,7 @@ fn dump_args() -> OvResult<()> {
     use overmount::btrfs::format::*;
     let output = Formatter::options()
         .byte_count(536_870_912_u64)?
-        .checksum(ChecksumAlgorithm::CRC32C)?
+        .checksum(ChecksumAlgorithm::Crc32c)?
         .data(DataProfile::Dup)?
         .features(["mixed-bg"])?
         .force()? // true if called
@@ -80,7 +80,7 @@ fn try_example_code() -> OvResult<()> {
     use overmount::btrfs::format::*;
     let formatter = Formatter::options()
         .byte_count(536_870_912_u64)?
-        .checksum(ChecksumAlgorithm::CRC32C)?
+        .checksum(ChecksumAlgorithm::Crc32c)?
         .data(DataProfile::Dup)?
         .features(["mixed-bg"])?
         .force()? // true if called
