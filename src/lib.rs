@@ -6,8 +6,6 @@
 
 use thiserror::Error;
 
-pub mod btrfs;
-
 /// A specialized [`Result`] type for Overmount errors.
 pub type Result<T> = std::result::Result<T, crate::Error>;
 
@@ -19,5 +17,3 @@ pub enum Error {
     ArgumentError(String),
 }
 
-#[cfg(test)]
-mod tests;

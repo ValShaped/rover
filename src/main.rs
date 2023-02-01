@@ -1,14 +1,14 @@
 #![allow(unused_imports)]
 
-use overmount::btrfs::format::{ChecksumAlgorithm, Formatter};
-use overmount::Result as OvResult;
+use mkfs_btrfs_rs::format::{ChecksumAlgorithm, Formatter};
+use mkfs_btrfs_rs::Result as MkResult;
 use std::{
     env::args,
     path::{Path, PathBuf},
     process::Output,
 };
 
-fn main() -> OvResult<()> {
+fn main() -> MkResult<()> {
     // let args: Vec<String> = args().collect();
     // if args.len() < 2 {
     //     return Ok(());
@@ -23,7 +23,7 @@ fn main() -> OvResult<()> {
 }
 
 #[allow(dead_code)]
-fn create_btrfs_image(path: PathBuf, rootdir: PathBuf, label: &str) -> OvResult<()> {
+fn create_btrfs_image(path: PathBuf, rootdir: PathBuf, label: &str) -> MkResult<()> {
     let formatter = Formatter::options()
         .rootdir(rootdir)?
         .label(label)?
@@ -45,8 +45,8 @@ fn create_btrfs_image(path: PathBuf, rootdir: PathBuf, label: &str) -> OvResult<
 }
 
 #[allow(dead_code)]
-fn dump_args() -> OvResult<()> {
-    use overmount::btrfs::format::*;
+fn dump_args() -> MkResult<()> {
+    use mkfs_btrfs_rs::format::*;
     let output = Formatter::options()
         .byte_count(536_870_912_u64)?
         .checksum(ChecksumAlgorithm::Crc32c)?
@@ -76,8 +76,8 @@ fn dump_args() -> OvResult<()> {
 }
 
 #[allow(dead_code)]
-fn try_example_code() -> OvResult<()> {
-    use overmount::btrfs::format::*;
+fn try_example_code() -> MkResult<()> {
+    use mkfs_btrfs_rs::format::*;
     let formatter = Formatter::options()
         .byte_count(536_870_912_u64)?
         .checksum(ChecksumAlgorithm::Crc32c)?
