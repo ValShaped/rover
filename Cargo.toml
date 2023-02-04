@@ -6,10 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-#argh = { version = "^0.1" }
+mkfs-btrfs-rs = { path="../mkfs-btrfs-rs" }
+thiserror = { version = "^1" }
+sys-mount = { version = "^2" }
 #itertools = { version = "^0.10" }
+#clap = { version = "^4" }
 #ron = { version = "^0.8" }
 #serde = { version = "^1" }
-sys-mount = { version = "^2" }
-thiserror = { version = "^1" }
-mkfs-btrfs-rs = {path="../mkfs-btrfs-rs"}
+zbus = { version = "3.8.0", features = ["lazy_static", "uuid"] }
+lazy_static = "1.4.0"
+#uuid = { version = "1.3.0", features = ["serde", "v4"] }
