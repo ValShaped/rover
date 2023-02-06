@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-mkfs-btrfs-rs = { path="../mkfs-btrfs-rs" }
+mkfs-btrfs-rs = { version = "^0" }
 thiserror = { version = "^1" }
 sys-mount = { version = "^2" }
 #itertools = { version = "^0.10" }
