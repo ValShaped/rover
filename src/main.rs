@@ -30,7 +30,7 @@ fn create_btrfs_image(path: PathBuf, rootdir: PathBuf, label: &str) -> MkResult<
         .shrink()?
         .mixed()?
         .force()?
-        .finalize();
+        .build();
     let Output {
         status: _status,
         stdout: out,
@@ -64,7 +64,7 @@ fn dump_args() -> MkResult<()> {
         .shrink()? // true if called
         .uuid("73e1b7e2-a3a8-49c2-b258-06f01a889bba")?
         .dump_args()
-        .finalize()
+        .build()
         .format(&PathBuf::from("test.btrfs"))?;
 
     println!(
@@ -94,7 +94,7 @@ fn try_example_code() -> MkResult<()> {
         .sectorsize(4096_usize)?
         .shrink()? // true if called
         .uuid("73e1b7e2-a3a8-49c2-b258-06f01a889bba")?
-        .finalize();
+        .build();
     let Output {
         status: _status,
         stdout: out,
