@@ -139,7 +139,7 @@ impl Service {
 /// | Work_Directory   | /opt/rwfus/mount/work          |
 ///  
 /// NEW:
-/// # [overlay]
+/// # [Overlay]
 ///
 /// | Name             | Default                        |
 /// |------------------|--------------------------------|
