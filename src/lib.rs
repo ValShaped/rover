@@ -1,20 +1,12 @@
-//! # Overmount
-//!
-//! Library crate used by Overmount to do filesystem stuff
-//!
-//! TODO: fix name
+//! GG EZ opaque overlay mounts.
+//! For when you don't care about the implementation
 
-use thiserror::Error;
+pub mod config;
+pub mod error;
+pub mod overlay;
 
-/// A specialized [`Result`] type for Overmount errors.
-pub type Result<T> = std::result::Result<T, crate::Error>;
+pub use error::{Error, Result};
 
-#[derive(Error, Debug)]
-pub enum Error {
-    #[error("{0}")]
-    IoError(#[from] std::io::Error),
-    #[error("{0}")]
-    ArgumentError(String),
-}
+#[cfg(test)]
+mod tests;
 
-pub mod mount;
